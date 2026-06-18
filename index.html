@@ -72,6 +72,7 @@
   <label><input type="checkbox" id="c_cell" checked> 등시간권 (인구격자)</label>
   <label><input type="checkbox" id="c_stn" checked> 도달역</label>
   <label><input type="checkbox" id="c_bnd" checked> 업무지구 경계</label>
+  <label><input type="checkbox" id="c_uq"> 용도지역 (클릭 시 용도 표시)</label>
  </div>
  <div class="credit">출처: 수도권 지하철 네트워크 그래프, SGIS 100m 인구격자(2024), VWorld</div>
 </div>
@@ -88,7 +89,21 @@ const map=L.map('map',{preferCanvas:true}).setView([37.45,126.95],11);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap'}).addTo(map);
 const cv=L.canvas({padding:.5});
 let cur='pangyo';
-const layers={cell:L.layerGroup().addTo(map),stn:L.layerGroup().addTo(map),bnd:L.layerGroup().addTo(map)};
+const layers={cell:L.layerGroup().addTo(map),stn:L.layerGroup().addTo(map),bnd:L.layerGroup().addTo(map),uq:L.layerGroup()};
+let UQDATA=null;
+function uqColor(u){ if(!u)return '#999'; if(u.includes('상업'))return '#e6550d'; if(u.includes('공업'))return '#756bb1'; if(u.includes('녹지'))return '#31a354'; if(u.includes('주거'))return '#3182bd'; return '#999'; }
+function buildUQ(){
+ layers.uq.clearLayers(); if(!UQDATA||!UQDATA[cur])return;
+ UQDATA[cur].forEach(f=>{
+   const polys = f.t==='MultiPolygon'? f.c : [f.c];
+   polys.forEach(poly=>{
+     const rings=poly.map(r=>r.map(p=>[p[1],p[0]]));
+     L.polygon(rings,{color:'#fff',weight:.6,fillColor:uqColor(f.u),fillOpacity:.55})
+       .bindPopup('<b>용도지역</b><br>'+f.u).addTo(layers.uq);
+   });
+ });
+}
+fetch('uq_layer.json').then(r=>r.json()).then(d=>{UQDATA=d; if(document.getElementById('c_uq').checked){buildUQ();layers.uq.addTo(map);}}).catch(()=>{});
 function clearAll(){for(const k in layers)layers[k].clearLayers();}
 function draw(){
  clearAll();
@@ -124,16 +139,18 @@ function draw(){
    '<div class="stat"><span>30분 도달역</span><b>'+n30+'개</b></div>'+
    '<div class="stat"><span>60분 도달역</span><b>'+n60+'개</b></div>';
  const c=cur==='pangyo'?d.core:d.core; map.setView([c[1],c[0]],11);
+ buildUQ();
  applyChk();
 }
 function applyChk(){
  layers.cell[document.getElementById('c_cell').checked?'addTo':'remove'](map);
  layers.stn[document.getElementById('c_stn').checked?'addTo':'remove'](map);
  layers.bnd[document.getElementById('c_bnd').checked?'addTo':'remove'](map);
+ layers.uq[document.getElementById('c_uq').checked?'addTo':'remove'](map);
 }
 document.getElementById('b_p').onclick=()=>{cur='pangyo';b_p.classList.add('on');b_s.classList.remove('on');draw();};
 document.getElementById('b_s').onclick=()=>{cur='songdo';b_s.classList.add('on');b_p.classList.remove('on');draw();};
-['c_cell','c_stn','c_bnd'].forEach(id=>document.getElementById(id).onchange=applyChk);
+['c_cell','c_stn','c_bnd','c_uq'].forEach(id=>document.getElementById(id).onchange=applyChk);
 function setView(m){
  const dash=document.getElementById('dash'), mapEl=document.getElementById('map'), pnl=document.querySelector('.panel'), lg=document.querySelector('.legend');
  const isDash=(m==='dash');
