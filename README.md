@@ -2,8 +2,8 @@
 
 가천대학교 스마트시티학과 기말과제 | 비교 대상: **판교 제1테크노밸리**(성공) vs **송도국제업무지구(IBD)**(저조)
 
-🔗 **배포 시스템(GitHub Pages):** (배포 후 URL 입력)
-
+🔗 저장소: https://github.com/jingij2-cmd/pangyo-songdo-analysis
+🔗 배포 시스템(GitHub Pages): https://jingij2-cmd.github.io/pangyo-songdo-analysis/
 ---
 
 ## 1. 개요
